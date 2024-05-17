@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const db = require("./db");
 require("dotenv").config();
+const passport = require("./auth");
 
 //middleware(body-parser) actrually process all the data-format to JSON
 //and data will be available at req.body to use
@@ -9,6 +10,18 @@ require("dotenv").config();
 const bodyParser = require("body-parser");
 app.use(bodyParser.json());
 
+//Middleware Function
+const logRequest = (req, res, next) => {
+  console.log(
+    `[${new Date().toLocaleString()}] Request Made to : ${req.originalUrl}`
+  );
+  next(); //move to the next phase
+};
+//use MiddleWare
+app.use(logRequest);
+
+app.use(passport.initialize());
+const localAuthMiddleware = passport.authenticate("local", { session: false });
 // Home Route
 app.get("/", function (req, res) {
   res.send("Welcome to the Hotel....How can I help you");
@@ -19,7 +32,7 @@ const personRoutes = require("./routes/personRoutes");
 const menuRoutes = require("./routes/menuRoutes");
 
 // Use the Routers
-app.use("/person", personRoutes);
+app.use("/person", localAuthMiddleware, personRoutes);
 app.use("/menu", menuRoutes);
 
 const PORT = process.env.PORT || 3000;
